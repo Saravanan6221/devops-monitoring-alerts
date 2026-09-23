@@ -1,1 +1,52 @@
+groups:
 
+  - name: server_alerts
+    rules:
+
+      - alert: HighCPUUsage
+        expr: 100 * (1 - avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 90
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 90% for more than 2 minutes."
+
+      - alert: HighMemoryUsage
+        expr: 100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 80% for more than 2 minutes."
+
+      - alert: HighDiskUsage
+        expr: 100 * (1 - (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"})) > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High disk usage"
+          description: "Root filesystem usage is above 80% for more than 2 minutes."
+
+  - name: application_alerts
+    rules:
+
+      - alert: BackendApplicationDown
+        expr: probe_success{job="backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend application is down"
+          description: "The backend application is not responding successfully."
+
+      - alert: BackendResponseTimeHigh
+        expr: probe_duration_seconds{job="backend"} > 2
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backend response time is above 2 seconds"
+          description: "Backend response time has exceeded 2 seconds for more than 2 minutes."
